@@ -2,4 +2,6 @@
     <string name="app_name">Kringle</string>
     <string name="scan_upload_text">Загрузите/отсканируйте изображение QR-Code</string>
     <string name="img_descr">Next icon</string>
+    <string name="text_scan_qr_code">Сканируйте изображение QR-Code</string>
+    <string name="text_upload_qr_code">Загрузите изображение QR-Code</string>
 </resources>
