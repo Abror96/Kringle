@@ -17,7 +17,8 @@
         android:theme="@style/AppTheme">
         <activity
             android:name=".MainActivity"
-            android:label="Главный экран">
+            android:label="Главный экран"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -26,6 +27,7 @@
         </activity>
         <activity
             android:name=".LoadQrCode"
+            android:screenOrientation="portrait"
             android:label="Сканировать QR-Code"
             android:parentActivityName=".MainActivity"
             />
