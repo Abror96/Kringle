@@ -16,5 +16,4 @@ public interface IAccount {
             @Query("timestamp") int timestamp,
             @Query("start") int start,
             @Query("limit") int limit);
-
 }

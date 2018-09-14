@@ -15,7 +15,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.zxing.BinaryBitmap;
 import com.google.zxing.ChecksumException;
@@ -109,13 +108,11 @@ public class LoadQrCode extends AppCompatActivity implements ZXingScannerView.Re
     @Override
     protected void onResume() {
         super.onResume();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (checkPermission()) {
-                if (scannerView != null) {
-                    scannerView.setResultHandler(this);
-                    scannerView.startCamera();
-                }
-            } else requestPermission();
+        if (checkPermission()) {
+            if (scannerView != null) {
+                scannerView.setResultHandler(this);
+                scannerView.startCamera();
+            }
         }
     }
 
@@ -179,7 +176,8 @@ public class LoadQrCode extends AppCompatActivity implements ZXingScannerView.Re
             Result result = reader.decode(new BinaryBitmap(new HybridBinarizer(source)));
             backToPrevActivity(result.getText());
         } catch (NotFoundException | ChecksumException | FormatException e) {
-            Snackbar.make(mainLayout, "Не удалось считать QR-Code, загрузите заскриненный вариант", Snackbar.LENGTH_LONG).show();
+            Snackbar.make(mainLayout, "" +
+                    "Unable to upload Qr-Code, please try again with screened/downloaded version", Snackbar.LENGTH_LONG).show();
         }
     }
 
