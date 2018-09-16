@@ -1,8 +1,8 @@
 <resources>
-    <string name="app_name">Kringle</string>
+    <string name="app_name">TBC Wallet</string>
     <string name="scan_upload_text">Load/scan QR-Code</string>
     <string name="img_descr">Next icon</string>
     <string name="text_scan_qr_code">Scan QR-Code</string>
     <string name="text_upload_qr_code">Upload QR-Code</string>
-    <string name="user_email">User email</string>
+    <string name="user_email">Your account:</string>
 </resources>

@@ -10,8 +10,10 @@ import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -35,6 +37,7 @@ import com.google.gson.Gson;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -56,6 +59,9 @@ import retrofit2.Retrofit;
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, TransactionsAddDialog.TransactionsAddDialogListener {
 
     private List<TransactionsResponseData> transactionsList = new ArrayList<>();
+
+    @BindView(R.id.preloader)
+    LinearLayout preloader;
 
     @BindView(R.id.main_layout)
     ConstraintLayout main_layout;
@@ -87,6 +93,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private Retrofit retrofit;
 
+    private LinearLayoutManager layoutManager;
+
     // Interfaces
     private ITransactions iTransactionsResponse;
     private IAccount iAccount;
@@ -108,27 +116,76 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     // timer
     Timer timer;
 
+    // limit of the list of transactions
+    int start = 0;
+    int limit = 10;
+
+    // variables for pagination
+    private boolean isLoading = true;
+    private int pastVisibleItems, visibleItemCount, totalItemCount, previous_total = 0;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
-        Objects.requireNonNull(getSupportActionBar()).setTitle("Main screen");
+        Objects.requireNonNull(getSupportActionBar()).setTitle("Dashboard");
+        getSupportActionBar().hide();
+
+        preloader.setVisibility(View.VISIBLE);
 
         scan_qr_code.setOnClickListener(this);
         btn_transaction_add.setOnClickListener(this);
 
+        btn_transaction_add.setVisibility(View.GONE);
+
         accountPrefs = getSharedPreferences("AccountData", MODE_PRIVATE);
+
+        // init recycler
+        transactions_recycler.setHasFixedSize(true);
+        layoutManager = new LinearLayoutManager(this);
+        transactions_recycler.setLayoutManager(layoutManager);
 
         // init api
         retrofit = RetrofitClient.getInstance();
 
-
         timer = new Timer();
+
 
         // checking whether the user is authorized
         isAuthorized();
 
+        transactions_recycler.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+
+                visibleItemCount = layoutManager.getChildCount();
+                totalItemCount = layoutManager.getItemCount();
+                pastVisibleItems = layoutManager.findFirstVisibleItemPosition();
+
+
+                if (!recyclerView.canScrollVertically(1)) {
+
+                    if (dy > 0) {
+                        if (isLoading) {
+                            if (totalItemCount > previous_total) {
+                                isLoading = false;
+                                previous_total = totalItemCount;
+                            }
+                        }
+                        if (!isLoading
+                                && (totalItemCount-visibleItemCount) <= (pastVisibleItems+10)) {
+
+                            limit += 10;
+                            loadMoreDataToRecycler();
+                            isLoading = true;
+                        }
+                    }
+                }
+            }
+        });
     }
 
     // handle returning from LoadQrCode.java
@@ -141,7 +198,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             if (data.getStringExtra("response") != null) {
                 String response = data.getStringExtra("response");
                 parseResponseJson("{"+response+"}");
-                //scan_qr_code.setVisibility(View.GONE);
 
                 showLoadingData();
             }
@@ -156,8 +212,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         // if user is authorized
         if(token != null && id != 0) {
 
-            showLoadingData();
-
             // getting account data with saved id and token
             getAccountData(id, token);
 
@@ -167,9 +221,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     getAccountData(id, token);
                     Log.d("LOGGER", "Data is updated");
                 }
-            }, 0, 300000);
+            }, 300000, 300000);
+        } else {
+            new android.os.Handler().postDelayed(
+                    new Runnable() {
+                        public void run() {
+                            // toggle visibility of views
+                            toggleVisibilityOfViews(id, token);
+
+
+                            preloader.setVisibility(View.GONE);
+                            getSupportActionBar().show();
+                            if (bar != null)
+                                bar.dismiss();
+                        }
+                    }, 1500);
         }
-        toggleVisibilityOfViews(id, token);
     }
 
     // Getting Account Data
@@ -178,7 +245,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         iAccount = retrofit.create(IAccount.class);
 
         Call<Account> accountCall = iAccount.getAccountData(
-                createKey(id, token, "10"),
+                createKey(id, token, "10", "0"),
                 id,
                 currentTimestamp(),
                 0,
@@ -200,14 +267,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     userBalance = String.valueOf(accountResponse.getData().get(0).getBalance());
                     userLastTransactionTimestamp = String.valueOf(accountResponse.getData().get(0).getLast_transaction_timestamp());
 
-                    tv_account_email.setText(userEmail);
-                    tv_account_balance.setText(userBalance);
-
                     // saving account data
                     saveAccountData(id, token);
 
-                    // toggle visibility of views
-                    toggleVisibilityOfViews(id, token);
+
 
                     // get transactions
                     getTransactionData(id, token);
@@ -215,12 +278,40 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     // get exchange rate
                     getExchangeRate(id, token);
 
-                    if (bar != null)
-                        bar.dismiss();
+                    Log.d("LOGGER", "onResponse: usd: " + usd_cur );
+                    new android.os.Handler().postDelayed(
+                            new Runnable() {
+                                public void run() {
+                                    double res = Integer.parseInt(userBalance) * usd_cur;
+                                    String str_res = new DecimalFormat("##.##").format(res);
+                                    tv_account_email.setText(userEmail);
+                                    tv_account_balance.setText(userBalance + " Kringle ($" + str_res + ")");
+                                }
+                            }, 700);
+
+                    new android.os.Handler().postDelayed(
+                            new Runnable() {
+                                public void run() {
+                                    // toggle visibility of views
+                                    toggleVisibilityOfViews(id, token);
+
+
+                                    preloader.setVisibility(View.GONE);
+                                    getSupportActionBar().show();
+                                    if (bar != null)
+                                        bar.dismiss();
+                                }
+                            }, 1500);
+
+
 
 
                 } else {
                     Snackbar.make(main_layout, "Authorization error, please scan the actual QR-Code", Snackbar.LENGTH_LONG).show();
+                    preloader.setVisibility(View.GONE);
+                    getSupportActionBar().show();
+                    if (bar != null)
+                        bar.dismiss();
                 }
 
 
@@ -239,13 +330,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         iTransactionsResponse = retrofit.create(ITransactions.class);
 
         Call<TransactionsResponse> transactionsResponseCall = iTransactionsResponse.getTransactions(
-                createKey(id, token, "20"),
+                createKey(id, token, String.valueOf(limit), "0"),
                 id,
                 currentTimestamp(),
                 0,
-                20
+                limit
         );
-
 
         transactionsResponseCall.enqueue(new Callback<TransactionsResponse>() {
             @Override
@@ -347,7 +437,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 TransactionsPostResponse transactionsPostResponse = response.body();
                 Log.d("LOGGER", "onResponse: " + transactionsPostResponse.getStatus());
                 if (transactionsPostResponse.getStatus().equals("ok")) {
-                    Snackbar.make(main_layout, "Transactions is successfully sent", Snackbar.LENGTH_LONG).show();
+                    Snackbar.make(main_layout, "Transaction has been sent successfully", Snackbar.LENGTH_LONG).show();
                     new android.os.Handler().postDelayed(
                         new Runnable() {
                             public void run() {
@@ -370,12 +460,65 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     // put data to recycler view
     private void fillRecyclerWithData() {
-        // pull the data into the recyclerView
-        transactions_recycler.setHasFixedSize(true);
-        transactions_recycler.setLayoutManager(new LinearLayoutManager(this));
 
         adapter = new TransactionsAdapter(getApplicationContext(), transactionsList);
         transactions_recycler.setAdapter(adapter);
+
+
+    }
+
+    // load more data to recyclerView
+    private void loadMoreDataToRecycler() {
+
+        // display loading dialog
+        showLoadingData();
+
+        final String token = accountPrefs.getString("token", null);
+        final int id = accountPrefs.getInt("id", 0);
+
+        // if user is authorized
+        if(token != null && id != 0) {
+
+            iTransactionsResponse = retrofit.create(ITransactions.class);
+
+            Call<TransactionsResponse> transactionsResponseCall = iTransactionsResponse.getTransactions(
+                    createKey(id, token, String.valueOf(limit), String.valueOf(start)),
+                    id,
+                    currentTimestamp(),
+                    start,
+                    limit
+            );
+
+            transactionsResponseCall.enqueue(new Callback<TransactionsResponse>() {
+                @Override
+                public void onResponse(Call<TransactionsResponse> call, Response<TransactionsResponse> response) {
+                    int statusCode = response.code();
+                    Log.d("LOGGER Transactions", "response code: " + statusCode);
+
+                    TransactionsResponse transactionsResponse = response.body();
+                    if (transactionsResponse.getStatus().equals("ok")) {
+                        if (transactionsList.size() > 0) transactionsList.clear();
+
+                        List<TransactionsResponseData> transactionsResponseDataList = transactionsResponse.getData();
+                        adapter.add(transactionsResponseDataList);
+
+
+                        if (bar != null)
+                            bar.dismiss();
+                    } else {
+                        Snackbar.make(main_layout, "Something goes wrong while downloading data", Snackbar.LENGTH_LONG).show();
+                    }
+                    adapter.notifyDataSetChanged();
+
+                }
+
+                @Override
+                public void onFailure(Call<TransactionsResponse> call, Throwable t) {
+                    Snackbar.make(main_layout, "Something goes wrong while downloading data", Snackbar.LENGTH_LONG).show();
+                    Log.d("LOGGER Transactions", "onFailure: " + t.getMessage());
+                }
+            });
+        }
     }
 
     // set visibilities of views
@@ -411,7 +554,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     // creating key for Get Account and Get Transactions
-    private String createKey(int id, String token, String limit) {
+    private String createKey(int id, String token, String limit, String start) {
 
         int timestamp_str = currentTimestamp();
 
@@ -419,7 +562,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         map.put("id", String.valueOf(id));
         map.put("timestamp", String.valueOf(timestamp_str));
-        map.put("start", "0");
+        map.put("start", start);
         map.put("limit", limit);
 
         return concatAndHashKey(map, token);
@@ -509,6 +652,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     // show progress dialog while downloading data
     private void showLoadingData() {
+
         bar = Snackbar.make(main_layout, "Downloading data", Snackbar.LENGTH_INDEFINITE);
         ViewGroup contentLay = (ViewGroup) bar.getView().findViewById(android.support.design.R.id.snackbar_text).getParent();
         ProgressBar item = new ProgressBar(this);

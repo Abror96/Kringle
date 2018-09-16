@@ -3,7 +3,6 @@ package com.example.kringle.kringle.adapter;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,7 +11,6 @@ import android.widget.TextView;
 import com.example.kringle.kringle.R;
 import com.example.kringle.kringle.model.TransactionsResponseData;
 
-import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -42,6 +40,7 @@ public class TransactionsAdapter extends RecyclerView.Adapter<TransactionsAdapte
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+
         holder.transaction_date.setText(getDate(list.get(position).getTimestamp()));
         holder.transaction_amount.setText(
                 String.format("%s%s", isIncoming(list.get(position).getIncoming()),
@@ -63,7 +62,7 @@ public class TransactionsAdapter extends RecyclerView.Adapter<TransactionsAdapte
 
     @Override
     public int getItemCount() {
-        return 10;
+        return list.size();
     }
 
 
@@ -81,6 +80,11 @@ public class TransactionsAdapter extends RecyclerView.Adapter<TransactionsAdapte
             super(itemView);
             ButterKnife.bind(this, itemView);
         }
+    }
+
+    public void add(List<TransactionsResponseData> transactions) {
+        list.addAll(transactions);
+        notifyDataSetChanged();
     }
 
 }

@@ -1,18 +1,35 @@
 package com.example.kringle.kringle.model;
 
+import android.support.annotation.Nullable;
+
+import com.google.gson.annotations.SerializedName;
+
 public class TransactionsResponseData {
 
-    int txid;
+//    @SerializedName("txid")
+//    Integer txid;
+
+    @SerializedName("amount")
     int amount;
+
+    @SerializedName("address_from")
     String address_from;
+
+    @SerializedName("address_to")
     String address_to;
+
+    @SerializedName("incoming")
     int incoming;
+
+    @SerializedName("timestamp")
     int timestamp;
+
+    @SerializedName("status")
     String status;
 
-    public int getTxid() {
-        return txid;
-    }
+//    public int getTxid() {
+//        return txid;
+//    }
 
     public int getAmount() {
         return amount;

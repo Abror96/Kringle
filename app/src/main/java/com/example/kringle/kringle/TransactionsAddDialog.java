@@ -59,7 +59,7 @@ public class TransactionsAddDialog extends AppCompatDialogFragment {
 
         // Initializing a String Array
         final String[] currency_list = new String[]{
-                "Select a currency...",
+                "Currency",
                 "Kringle",
                 "USD"
         };
@@ -96,19 +96,22 @@ public class TransactionsAddDialog extends AppCompatDialogFragment {
                 int amount = 0;
                 if (!et_transaction_amount.getText().toString().equals("")) {
                     amount = Integer.parseInt(et_transaction_amount.getText().toString());
+
+                    String result;
+
+                    if (choose[position].equals("Kringle")) {
+                        result = new DecimalFormat("##.##").format(amount * usd_cur);
+                        readonly_currency.setText(
+                                result + " USD"
+                        );
+                    } else {
+                        result = new DecimalFormat("##.##").format(Math.ceil(amount / usd_cur));
+                        readonly_currency.setText(
+                                result + " Kringle"
+                        );
+                    }
                 }
-                String result;
-                if (choose[position].equals("Kringle")) {
-                    result = new DecimalFormat("##.###").format(amount * usd_cur);
-                    readonly_currency.setText(
-                            result + " USD"
-                    );
-                } else {
-                    result = new DecimalFormat("##.###").format(amount / usd_cur);
-                    readonly_currency.setText(
-                            result + " Kringle"
-                    );
-                }
+
 
             }
 
@@ -119,7 +122,7 @@ public class TransactionsAddDialog extends AppCompatDialogFragment {
         });
 
         builder.setView(view)
-                .setTitle("Add new transaction")
+                .setTitle("Send TBC")
                 .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
