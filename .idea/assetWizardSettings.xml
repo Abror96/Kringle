@@ -28,9 +28,10 @@
                         </option>
                         <option name="values">
                           <map>
+                            <entry key="assetSourceType" value="FILE" />
                             <entry key="color" value="ffffff" />
-                            <entry key="outputName" value="ic_add_white" />
-                            <entry key="sourceFile" value="$USER_HOME$" />
+                            <entry key="outputName" value="comp_logo_svg" />
+                            <entry key="sourceFile" value="$USER_HOME$/snap/telegram-desktop/common/Downloads/Telegram Desktop/Icon/k2 144x144.svg" />
                           </map>
                         </option>
                       </PersistentState>

@@ -2,6 +2,8 @@ package com.example.kringle.kringle;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -10,6 +12,7 @@ import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,12 +25,14 @@ import com.example.kringle.kringle.adapter.TransactionsAdapter;
 import com.example.kringle.kringle.model.Account;
 import com.example.kringle.kringle.model.ExchangeRate;
 import com.example.kringle.kringle.model.ExchangeRateData;
+import com.example.kringle.kringle.model.LogOut;
 import com.example.kringle.kringle.model.QrCode;
 import com.example.kringle.kringle.model.TransactionsPostResponse;
 import com.example.kringle.kringle.model.TransactionsResponse;
 import com.example.kringle.kringle.model.TransactionsResponseData;
 import com.example.kringle.kringle.retrofit.IAccount;
 import com.example.kringle.kringle.retrofit.IExchangeRate;
+import com.example.kringle.kringle.retrofit.ILogOut;
 import com.example.kringle.kringle.retrofit.ITransactions;
 import com.example.kringle.kringle.retrofit.ITransactionsPost;
 import com.example.kringle.kringle.retrofit.RetrofitClient;
@@ -81,11 +86,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @BindView(R.id.tv_account_balance)
     TextView tv_account_balance;
 
-    @BindView(R.id.exchange_rate)
-    TextView tv_exchange_rate;
+//    @BindView(R.id.exchange_rate)
+//    TextView tv_exchange_rate;
 
     @BindView(R.id.btn_transaction_add)
     FloatingActionButton btn_transaction_add;
+
+    @BindView(R.id.app_version)
+    TextView app_version;
+
 
     Snackbar bar;
 
@@ -100,6 +109,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private IAccount iAccount;
     private IExchangeRate iExchangeRate;
     private ITransactionsPost iTransactionsPost;
+    private ILogOut iLogOut;
 
     // saving data
     private SharedPreferences accountPrefs;
@@ -124,6 +134,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private boolean isLoading = true;
     private int pastVisibleItems, visibleItemCount, totalItemCount, previous_total = 0;
 
+    // menu item
+    MenuItem menu_logout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -132,6 +144,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         ButterKnife.bind(this);
         Objects.requireNonNull(getSupportActionBar()).setTitle("Dashboard");
         getSupportActionBar().hide();
+
+        // getting version of app
+        app_version.setText("v. " + getVersion());
 
         preloader.setVisibility(View.VISIBLE);
 
@@ -188,6 +203,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         });
     }
 
+    private String getVersion() {
+        String version = "";
+        try {
+            PackageInfo pInfo = this.getPackageManager().getPackageInfo(getPackageName(), 0);
+            version = pInfo.versionName;
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
+        return version;
+    }
+
     // handle returning from LoadQrCode.java
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -223,12 +249,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
             }, 300000, 300000);
         } else {
+            // toggle visibility of views
+            toggleVisibilityOfViews(id, token);
             new android.os.Handler().postDelayed(
                     new Runnable() {
                         public void run() {
-                            // toggle visibility of views
-                            toggleVisibilityOfViews(id, token);
-
 
                             preloader.setVisibility(View.GONE);
                             getSupportActionBar().show();
@@ -270,8 +295,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     // saving account data
                     saveAccountData(id, token);
 
-
-
                     // get transactions
                     getTransactionData(id, token);
 
@@ -308,10 +331,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 } else {
                     Snackbar.make(main_layout, "Authorization error, please scan the actual QR-Code", Snackbar.LENGTH_LONG).show();
-                    preloader.setVisibility(View.GONE);
-                    getSupportActionBar().show();
-                    if (bar != null)
-                        bar.dismiss();
+
+                    isAuthorized();
                 }
 
 
@@ -386,7 +407,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 ExchangeRate exchangeRate = response.body();
                 if (exchangeRate.getStatus().equals("ok")) {
                     ExchangeRateData exchangeRateData = exchangeRate.getData().get(0);
-                    tv_exchange_rate.setText("1 K = " + exchangeRateData.getUsd() + " $");
+//                    tv_exchange_rate.setText("1 K = " + exchangeRateData.getUsd() + " $");
 
                     usd_cur = exchangeRateData.getUsd();
                     eur_cur = exchangeRateData.getEur();
@@ -454,6 +475,38 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             public void onFailure(Call<TransactionsPostResponse> call, Throwable t) {
                 Snackbar.make(main_layout, "Something goes wrong while downloading data", Snackbar.LENGTH_LONG).show();
                 Log.d("LOGGER Transactions", "onFailure: " + t.getMessage());
+            }
+        });
+    }
+
+    // logging out
+    private void logOut(final int id, final String token) {
+        iLogOut = retrofit.create(ILogOut.class);
+
+        Call<LogOut> logOutCall = iLogOut.logout(
+                createKey(id, token),
+                id,
+                currentTimestamp()
+        );
+
+        logOutCall.enqueue(new Callback<LogOut>() {
+            @Override
+            public void onResponse(Call<LogOut> call, Response<LogOut> response) {
+                int statusCode = response.code();
+                Log.d("LOGGER Logout", "response code: " + statusCode);
+
+                SharedPreferences.Editor editor = getSharedPreferences("AccountData", MODE_PRIVATE).edit();
+
+                editor.clear();
+                editor.apply();
+
+                isAuthorized();
+            }
+
+            @Override
+            public void onFailure(Call<LogOut> call, Throwable t) {
+                Snackbar.make(main_layout, "Something goes wrong while logging out", Snackbar.LENGTH_LONG).show();
+                Log.d("LOGGER Logout", "onFailure: " + t.getMessage());
             }
         });
     }
@@ -529,16 +582,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             scan_qr_code.setVisibility(View.GONE);
             account_info_layout.setVisibility(View.VISIBLE);
             transactions_recycler.setVisibility(View.VISIBLE);
-            tv_exchange_rate.setVisibility(View.VISIBLE);
+            //tv_exchange_rate.setVisibility(View.VISIBLE);
             btn_transaction_add.setVisibility(View.VISIBLE);
+            if (menu_logout != null)
+                menu_logout.setVisible(true);
         }
         // if user isn't authorized
         else {
             // toggling visibility of views
             account_info_layout.setVisibility(View.GONE);
             scan_qr_code.setVisibility(View.VISIBLE);
-            tv_exchange_rate.setVisibility(View.GONE);
+            //tv_exchange_rate.setVisibility(View.GONE);
+
+            transactions_recycler.setVisibility(View.GONE);
             btn_transaction_add.setVisibility(View.GONE);
+            if (menu_logout != null)
+                menu_logout.setVisible(false);
         }
     }
 
@@ -677,7 +736,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onResume();
         if (isOffline()) {
             Snackbar.make(main_layout, "There is no internet connection. Check your network.", Snackbar.LENGTH_LONG).show();
-        }
+        } else
+            preloader.setVisibility(View.GONE);
+            getSupportActionBar().show();
+            isAuthorized();
     }
 
     @Override
@@ -698,4 +760,33 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         }
     }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main_menu, menu);
+
+        menu_logout = menu.findItem(R.id.logout);
+
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.logout:
+                String token = accountPrefs.getString("token", null);
+                int id = accountPrefs.getInt("id", 0);
+
+                // if user is authorized
+                if(token != null && id != 0) {
+                    logOut(id, token);
+                }
+
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+
+    }
+
 }

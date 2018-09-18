@@ -20,9 +20,10 @@
             android:layout_width="100dp"
             android:layout_height="100dp"
             android:layout_marginBottom="50dp"
-            android:src="@mipmap/k2"/>
+            android:src="@drawable/comp_logo_svg"/>
 
         <TextView
+            android:id="@+id/app_version"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textAlignment="center"
@@ -150,20 +151,20 @@
 
     </android.support.constraint.ConstraintLayout>
 
-    <TextView
-        android:id="@+id/exchange_rate"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="125dp"
-        android:visibility="gone"
-        android:text="1 $ = 66,666 ₽"
-        android:textColor="#000"
-        android:textSize="40sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/account_info" />
+    <!--<TextView-->
+        <!--android:id="@+id/exchange_rate"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:layout_marginEnd="8dp"-->
+        <!--android:layout_marginStart="8dp"-->
+        <!--android:layout_marginTop="125dp"-->
+        <!--android:visibility="gone"-->
+        <!--android:text="1 $ = 66,666 ₽"-->
+        <!--android:textColor="#000"-->
+        <!--android:textSize="40sp"-->
+        <!--app:layout_constraintEnd_toEndOf="parent"-->
+        <!--app:layout_constraintStart_toStartOf="parent"-->
+        <!--app:layout_constraintTop_toTopOf="@+id/account_info" />-->
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/transactions_recycler"
@@ -172,12 +173,12 @@
         android:visibility="gone"
         android:paddingLeft="4dp"
         android:paddingRight="4dp"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="105dp"
         android:paddingTop="10dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/exchange_rate" />
+        app:layout_constraintTop_toTopOf="@+id/account_info" />
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/btn_transaction_add"

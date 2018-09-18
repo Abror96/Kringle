@@ -198,7 +198,6 @@ public class LoadQrCode extends AppCompatActivity implements ZXingScannerView.Re
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
-                Log.d("LOGGER", "onOptionsItemSelected: 123");
                 onBackPressed();
                 return true;
             default:
