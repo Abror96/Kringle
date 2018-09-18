@@ -249,11 +249,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
             }, 300000, 300000);
         } else {
-            // toggle visibility of views
-            toggleVisibilityOfViews(id, token);
             new android.os.Handler().postDelayed(
                     new Runnable() {
                         public void run() {
+                            // toggle visibility of views
+                            toggleVisibilityOfViews(id, token);
+
 
                             preloader.setVisibility(View.GONE);
                             getSupportActionBar().show();
@@ -737,9 +738,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (isOffline()) {
             Snackbar.make(main_layout, "There is no internet connection. Check your network.", Snackbar.LENGTH_LONG).show();
         } else
-            preloader.setVisibility(View.GONE);
-            getSupportActionBar().show();
-            isAuthorized();
+            new android.os.Handler().postDelayed(
+                    new Runnable() {
+                        public void run() {
+                            preloader.setVisibility(View.GONE);
+                            getSupportActionBar().show();
+                            isAuthorized();
+                        }
+                    }, 1500);
     }
 
     @Override
