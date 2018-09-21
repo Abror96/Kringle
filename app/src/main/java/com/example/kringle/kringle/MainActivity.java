@@ -4,13 +4,19 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.graphics.drawable.ColorDrawable;
 import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -69,7 +75,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     LinearLayout preloader;
 
     @BindView(R.id.main_layout)
-    ConstraintLayout main_layout;
+    DrawerLayout main_layout;
 
     @BindView(R.id.scan_qr_code)
     ConstraintLayout scan_qr_code;
@@ -136,14 +142,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     // menu item
     MenuItem menu_logout;
+    ActionBar actionbar;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
-        Objects.requireNonNull(getSupportActionBar()).setTitle("Dashboard");
-        getSupportActionBar().hide();
+
+        //setting the toolbar
+        Toolbar toolbar = findViewById(R.id.toolbar_main);
+        setSupportActionBar(toolbar);
+        actionbar = getSupportActionBar();
+        actionbar.setTitle("Dashboard");
+        actionbar.setHomeAsUpIndicator(R.drawable.ic_menu);
+        actionbar.hide();
 
         // getting version of app
         app_version.setText("v. " + getVersion());
@@ -166,6 +180,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         retrofit = RetrofitClient.getInstance();
 
         timer = new Timer();
+
+        leftSidebar();
 
 
         // checking whether the user is authorized
@@ -203,6 +219,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         });
     }
 
+    private void leftSidebar() {
+        NavigationView navigationView = findViewById(R.id.nav_view);
+        navigationView.setNavigationItemSelectedListener(
+                new NavigationView.OnNavigationItemSelectedListener() {
+                    @Override
+                    public boolean onNavigationItemSelected(MenuItem menuItem) {
+                        // set item as selected to persist highlight
+                        menuItem.setChecked(true);
+                        // close drawer when item is tapped
+                        main_layout.closeDrawers();
+
+                        // Add code here to update the UI based on the item selected
+                        // For example, swap UI fragments here
+
+                        return true;
+                    }
+                });
+    }
+
     private String getVersion() {
         String version = "";
         try {
@@ -223,9 +258,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (requestCode == LoadQrCode.REQUEST_CODE_FOR_INTENT && data != null) {
             if (data.getStringExtra("response") != null) {
                 String response = data.getStringExtra("response");
-                parseResponseJson("{"+response+"}");
+                try {
+                    parseResponseJson("{"+response+"}");
+                    showLoadingData();
+                } catch (Exception e) {
+                    Snackbar.make(main_layout, "Authorization error, please scan the actual QR-Code",
+                            Snackbar.LENGTH_LONG).show();
+                }
 
-                showLoadingData();
             }
         }
     }
@@ -257,7 +297,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
                             preloader.setVisibility(View.GONE);
-                            getSupportActionBar().show();
+                            actionbar.show();
                             if (bar != null)
                                 bar.dismiss();
                         }
@@ -321,7 +361,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
                                     preloader.setVisibility(View.GONE);
-                                    getSupportActionBar().show();
+                                    actionbar.show();
                                     if (bar != null)
                                         bar.dismiss();
                                 }
@@ -583,6 +623,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             scan_qr_code.setVisibility(View.GONE);
             account_info_layout.setVisibility(View.VISIBLE);
             transactions_recycler.setVisibility(View.VISIBLE);
+            actionbar.setDisplayHomeAsUpEnabled(true);
             //tv_exchange_rate.setVisibility(View.VISIBLE);
             btn_transaction_add.setVisibility(View.VISIBLE);
             if (menu_logout != null)
@@ -594,7 +635,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             account_info_layout.setVisibility(View.GONE);
             scan_qr_code.setVisibility(View.VISIBLE);
             //tv_exchange_rate.setVisibility(View.GONE);
-
+            actionbar.setDisplayHomeAsUpEnabled(false);
             transactions_recycler.setVisibility(View.GONE);
             btn_transaction_add.setVisibility(View.GONE);
             if (menu_logout != null)
@@ -742,7 +783,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     new Runnable() {
                         public void run() {
                             preloader.setVisibility(View.GONE);
-                            getSupportActionBar().show();
+                            actionbar.show();
                             isAuthorized();
                         }
                     }, 1500);
@@ -788,6 +829,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     logOut(id, token);
                 }
 
+                return true;
+            case android.R.id.home:
+                main_layout.openDrawer(GravityCompat.START);
                 return true;
             default:
                 return super.onOptionsItemSelected(item);

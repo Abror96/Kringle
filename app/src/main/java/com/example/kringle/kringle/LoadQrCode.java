@@ -11,8 +11,10 @@ import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
@@ -56,6 +58,12 @@ public class LoadQrCode extends AppCompatActivity implements ZXingScannerView.Re
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_load_qr_code);
         ButterKnife.bind(this);
+
+        //setting the toolbar
+        Toolbar toolbar = findViewById(R.id.toolbar_load);
+        setSupportActionBar(toolbar);
+        ActionBar actionbar = getSupportActionBar();
+        actionbar.setTitle("Load QR-Code");
 
         // checking permission for camera
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
