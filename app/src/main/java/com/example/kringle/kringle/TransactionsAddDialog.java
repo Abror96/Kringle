@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -15,11 +16,15 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.text.DecimalFormat;
+
+import butterknife.BindView;
+import butterknife.ButterKnife;
 
 public class TransactionsAddDialog extends AppCompatDialogFragment {
 
@@ -30,12 +35,11 @@ public class TransactionsAddDialog extends AppCompatDialogFragment {
     TextInputEditText et_transaction_amount;
     Spinner currency_spinner;
     TextView readonly_currency;
-
-    String changedCurrencyValue = "";
+    ImageView qr_btn;
 
     double usd_cur;
     double eur_cur;
-
+    String response;
 
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
@@ -47,6 +51,7 @@ public class TransactionsAddDialog extends AppCompatDialogFragment {
         if (getArguments() != null) {
             usd_cur = getArguments().getDouble("usd_cur");
             eur_cur = getArguments().getDouble("eur_cur");
+            response = getArguments().getString("response");
         }
 
         mainActivity = new MainActivity();
@@ -56,6 +61,10 @@ public class TransactionsAddDialog extends AppCompatDialogFragment {
         et_transaction_amount = view.findViewById(R.id.et_transaction_amount);
         currency_spinner = view.findViewById(R.id.currency_spinner);
         readonly_currency = view.findViewById(R.id.readonly_currency);
+        qr_btn = view.findViewById(R.id.qr_code_btn);
+
+        et_transaction_address.setText(response);
+
 
         // Initializing a String Array
         final String[] currency_list = new String[]{
@@ -118,6 +127,15 @@ public class TransactionsAddDialog extends AppCompatDialogFragment {
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
 
+            }
+        });
+
+
+        qr_btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ((MainActivity)getActivity()).qrCodeBtnListener();
+                dismiss();
             }
         });
 

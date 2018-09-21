@@ -42,7 +42,8 @@ import static android.Manifest.permission.CAMERA;
 public class LoadQrCode extends AppCompatActivity implements ZXingScannerView.ResultHandler, View.OnClickListener {
 
     private static final int REQUEST_CAMERA = 1;
-    public static final int REQUEST_CODE_FOR_INTENT = 5432;
+    public static final int REQUEST_CODE_FOR_ACCOUNT_INTENT = 5432;
+    public static final int REQUEST_CODE_FOR_ADDRESS_INTENT = 7549;
 
     @BindView(R.id.scanner_view)
     ZXingScannerView scannerView;
@@ -198,7 +199,14 @@ public class LoadQrCode extends AppCompatActivity implements ZXingScannerView.Re
     private void backToPrevActivity(String response) {
         Intent intent = new Intent(this, MainActivity.class);
         intent.putExtra("response", response);
-        setResult(REQUEST_CODE_FOR_INTENT, intent);
+        setResult(REQUEST_CODE_FOR_ACCOUNT_INTENT, intent);
+
+        Bundle bundle = new Bundle();
+        bundle.putString("response", response);
+
+        TransactionsAddDialog transactionsAddDialog = new TransactionsAddDialog();
+        transactionsAddDialog.setArguments(bundle);
+
         finish();
     }
 

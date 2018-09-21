@@ -144,12 +144,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     MenuItem menu_logout;
     ActionBar actionbar;
 
+    // user transactions address
+    private String address;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
+
+        address = "NBFWDS-VFN3AB-WK775O-CAQS5C-HOPZ5M-WAZRT2-MKPN";
 
         //setting the toolbar
         Toolbar toolbar = findViewById(R.id.toolbar_main);
@@ -183,9 +188,39 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         leftSidebar();
 
-
         // checking whether the user is authorized
         isAuthorized();
+
+        // navigation items onclick handler
+        NavigationView navigationView = findViewById(R.id.nav_view);
+        navigationView.setNavigationItemSelectedListener(
+                new NavigationView.OnNavigationItemSelectedListener() {
+                    @Override
+                    public boolean onNavigationItemSelected(MenuItem menuItem) {
+                        main_layout.closeDrawers();
+
+                        switch (menuItem.getItemId()) {
+                            case R.id.nav_request:
+                                openQrCodeDialog();
+                                return false;
+                            case R.id.nav_send:
+                                openDialog();
+                                return false;
+                            case R.id.nav_logout:
+                                String token = accountPrefs.getString("token", null);
+                                int id = accountPrefs.getInt("id", 0);
+
+                                // if user is authorized
+                                if(token != null && id != 0) {
+                                    logOut(id, token);
+                                }
+
+                                return false;
+                        }
+
+                        return true;
+                    }
+                });
 
         transactions_recycler.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
@@ -218,6 +253,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         });
     }
+
+
 
     private void leftSidebar() {
         NavigationView navigationView = findViewById(R.id.nav_view);
@@ -253,11 +290,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if (data.getStringExtra("response") != null) {
+            String response = data.getStringExtra("response");
 
-
-        if (requestCode == LoadQrCode.REQUEST_CODE_FOR_INTENT && data != null) {
-            if (data.getStringExtra("response") != null) {
-                String response = data.getStringExtra("response");
+            if (requestCode == LoadQrCode.REQUEST_CODE_FOR_ACCOUNT_INTENT) {
                 try {
                     parseResponseJson("{"+response+"}");
                     showLoadingData();
@@ -265,7 +301,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     Snackbar.make(main_layout, "Authorization error, please scan the actual QR-Code",
                             Snackbar.LENGTH_LONG).show();
                 }
+            } else if (requestCode == LoadQrCode.REQUEST_CODE_FOR_ADDRESS_INTENT) {
+                Bundle bundle = new Bundle();
+                bundle.putDouble("usd_cur", usd_cur);
+                bundle.putDouble("eur_cur", eur_cur);
+                bundle.putString("response", response);
 
+                TransactionsAddDialog transactionsAddDialog = new TransactionsAddDialog();
+                transactionsAddDialog.setArguments(bundle);
+                transactionsAddDialog.show(getSupportFragmentManager(), "Transaction adding dialog");
             }
         }
     }
@@ -725,7 +769,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         switch (v.getId()) {
             case R.id.scan_qr_code:
                 Intent loadQRIntent = new Intent(this, LoadQrCode.class);
-                startActivityForResult(loadQRIntent, LoadQrCode.REQUEST_CODE_FOR_INTENT);
+                startActivityForResult(loadQRIntent, LoadQrCode.REQUEST_CODE_FOR_ACCOUNT_INTENT);
                 break;
             case R.id.btn_transaction_add:
                 openDialog();
@@ -741,6 +785,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         TransactionsAddDialog transactionsAddDialog = new TransactionsAddDialog();
         transactionsAddDialog.setArguments(bundle);
         transactionsAddDialog.show(getSupportFragmentManager(), "Transaction adding dialog");
+    }
+
+    //qr code btn listener from transactionAddDialog
+    public void qrCodeBtnListener() {
+        Intent loadQRIntent = new Intent(this, LoadQrCode.class);
+        startActivityForResult(loadQRIntent, LoadQrCode.REQUEST_CODE_FOR_ADDRESS_INTENT);
     }
 
     // saving id and token of account
@@ -808,28 +858,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.main_menu, menu);
+    // opening qr code dialog
+    private void openQrCodeDialog() {
+        Bundle bundle = new Bundle();
+        bundle.putString("address", address);
 
-        menu_logout = menu.findItem(R.id.logout);
-
-        return true;
+        QrCodeDialog transactionsAddDialog = new QrCodeDialog();
+        transactionsAddDialog.setArguments(bundle);
+        transactionsAddDialog.show(getSupportFragmentManager(), "Your address QR-Code");
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.logout:
-                String token = accountPrefs.getString("token", null);
-                int id = accountPrefs.getInt("id", 0);
-
-                // if user is authorized
-                if(token != null && id != 0) {
-                    logOut(id, token);
-                }
-
-                return true;
             case android.R.id.home:
                 main_layout.openDrawer(GravityCompat.START);
                 return true;
