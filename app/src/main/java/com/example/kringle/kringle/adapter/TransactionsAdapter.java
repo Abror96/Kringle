@@ -2,11 +2,18 @@ package com.example.kringle.kringle.adapter;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
+import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.kringle.kringle.R;
 import com.example.kringle.kringle.model.TransactionsResponseData;
@@ -23,6 +30,9 @@ public class TransactionsAdapter extends RecyclerView.Adapter<TransactionsAdapte
 
     private Context context;
     private List<TransactionsResponseData> list;
+    private static int currentPosition = -1;
+    private boolean isOpened = false;
+    private int oldPosition;
 
     public TransactionsAdapter(Context context, List<TransactionsResponseData> list) {
         this.context = context;
@@ -39,7 +49,7 @@ public class TransactionsAdapter extends RecyclerView.Adapter<TransactionsAdapte
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull ViewHolder holder, final int position) {
 
         holder.transaction_date.setText(getDate(list.get(position).getTimestamp()));
         holder.transaction_amount.setText(
@@ -47,6 +57,55 @@ public class TransactionsAdapter extends RecyclerView.Adapter<TransactionsAdapte
                         String.valueOf(list.get(position).getAmount())));
         holder.transaction_currency.setText("Kringle");
         holder.transaction_status.setText(String.valueOf(list.get(position).getStatus()));
+        holder.address_from.setText(String.valueOf(list.get(position).getAddress_from()));
+        holder.address_to.setText(String.valueOf(list.get(position).getAddress_to()));
+        if (list.get(position).getIncoming() == 1)
+            holder.transaction_icon.setBackgroundResource(R.drawable.ic_in);
+        else
+            holder.transaction_icon.setBackgroundResource(R.drawable.ic_out);
+
+        holder.hidden_linearLayout.setVisibility(View.GONE);
+
+        if (currentPosition == position) {
+            if (oldPosition == currentPosition) {
+                if (!isOpened) {
+                    //creating an animation
+                    Animation slideDown = AnimationUtils.loadAnimation(context, R.anim.slide_down);
+                    //toggling visibility
+                    holder.hidden_linearLayout.setVisibility(View.VISIBLE);
+                    //adding sliding effect
+                    holder.hidden_linearLayout.startAnimation(slideDown);
+                    isOpened = true;
+                } else {
+                    //creating an animation
+                    Animation slide_up = AnimationUtils.loadAnimation(context, R.anim.slide_up);
+                    //toggling visibility
+                    holder.hidden_linearLayout.setVisibility(View.GONE);
+                    //adding sliding effect
+                    holder.hidden_linearLayout.startAnimation(slide_up);
+                    isOpened = false;
+                }
+            } else {
+                Animation slideDown = AnimationUtils.loadAnimation(context, R.anim.slide_down);
+                //toggling visibility
+                holder.hidden_linearLayout.setVisibility(View.VISIBLE);
+                //adding sliding effect
+                holder.hidden_linearLayout.startAnimation(slideDown);
+                isOpened = true;
+            }
+
+
+        }
+
+        holder.ll_transaction_item.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                oldPosition = currentPosition;
+                currentPosition = position;
+                notifyDataSetChanged();
+            }
+        });
+
     }
 
     private String isIncoming(int num) {
@@ -75,6 +134,17 @@ public class TransactionsAdapter extends RecyclerView.Adapter<TransactionsAdapte
         TextView transaction_currency;
         @BindView(R.id.tv_transaction_status)
         TextView transaction_status;
+        @BindView(R.id.address_from)
+        TextView address_from;
+        @BindView(R.id.address_to)
+        TextView address_to;
+        @BindView(R.id.linearLayout)
+        LinearLayout hidden_linearLayout;
+        @BindView(R.id.transaction_item)
+        LinearLayout ll_transaction_item;
+        @BindView(R.id.transaction_icon)
+        ImageView transaction_icon;
+
 
         public ViewHolder(View itemView) {
             super(itemView);

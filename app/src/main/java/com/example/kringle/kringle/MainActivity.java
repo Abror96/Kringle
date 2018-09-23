@@ -232,6 +232,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 pastVisibleItems = layoutManager.findFirstVisibleItemPosition();
 
 
+
                 if (!recyclerView.canScrollVertically(1)) {
 
                     if (dy > 0) {
@@ -602,7 +603,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         adapter = new TransactionsAdapter(getApplicationContext(), transactionsList);
         transactions_recycler.setAdapter(adapter);
 
-
     }
 
     // load more data to recyclerView
@@ -646,7 +646,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     } else {
                         Snackbar.make(main_layout, "Something goes wrong while downloading data", Snackbar.LENGTH_LONG).show();
                     }
-                    adapter.notifyDataSetChanged();
 
                 }
 
