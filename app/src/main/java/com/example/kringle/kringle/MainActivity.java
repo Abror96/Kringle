@@ -53,7 +53,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.TreeMap;
@@ -153,8 +152,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
-
-        address = "NBFWDS-VFN3AB-WK775O-CAQS5C-HOPZ5M-WAZRT2-MKPN";
 
         //setting the toolbar
         Toolbar toolbar = findViewById(R.id.toolbar_main);
@@ -355,7 +352,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         iAccount = retrofit.create(IAccount.class);
 
-        Call<Account> accountCall = iAccount.getAccountData(
+        final Call<Account> accountCall = iAccount.getAccountData(
                 createKey(id, token, "10", "0"),
                 id,
                 currentTimestamp(),
@@ -377,6 +374,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     userEmail = accountResponse.getData().get(0).getEmail();
                     userBalance = String.valueOf(accountResponse.getData().get(0).getBalance());
                     userLastTransactionTimestamp = String.valueOf(accountResponse.getData().get(0).getLast_transaction_timestamp());
+                    address = String.valueOf(accountResponse.getData().get(0).getAddress());
 
                     // saving account data
                     saveAccountData(id, token);

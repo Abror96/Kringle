@@ -50,7 +50,4 @@ dependencies {
     implementation 'com.squareup.okhttp3:okhttp:3.11.0'
     implementation 'com.squareup.okhttp3:logging-interceptor:3.11.0'
 
-    // expandable recyclerview
-    compile 'com.thoughtbot:expandablerecyclerview:1.3'
-
 }

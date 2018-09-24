@@ -11,6 +11,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.TextInputEditText;
 import android.support.v7.app.AppCompatDialogFragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -63,8 +64,13 @@ public class TransactionsAddDialog extends AppCompatDialogFragment {
         readonly_currency = view.findViewById(R.id.readonly_currency);
         qr_btn = view.findViewById(R.id.qr_code_btn);
 
-        et_transaction_address.setText(response);
+        Log.d("LOGGER", "onCreateDialog: " + response);
+        if (response != null) {
+            response = response.substring(4, response.length());
+            Log.d("LOGGER", "onCreateDialog: " + response);
+        }
 
+        et_transaction_address.setText(response);
 
         // Initializing a String Array
         final String[] currency_list = new String[]{

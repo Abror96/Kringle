@@ -71,6 +71,7 @@
             android:id="@+id/linearLayout"
             android:paddingLeft="16dp"
             android:paddingRight="16dp"
+            android:visibility="gone"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
@@ -92,14 +93,14 @@
                 <TextView
                     android:id="@+id/address_from"
                     android:layout_width="match_parent"
-                    android:textSize="11sp"
+                    android:textSize="10sp"
                     android:layout_height="wrap_content"
                     android:text="address from"/>
 
                 <TextView
                     android:id="@+id/address_to"
                     android:layout_width="match_parent"
-                    android:textSize="11sp"
+                    android:textSize="10sp"
                     android:layout_height="wrap_content"
                     android:paddingBottom="10dp"
                     android:text="address to"/>

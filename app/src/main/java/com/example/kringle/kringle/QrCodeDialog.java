@@ -29,8 +29,10 @@ public class QrCodeDialog extends AppCompatDialogFragment {
         LayoutInflater inflater = getActivity().getLayoutInflater();
         View view = inflater.inflate(R.layout.layout_qr_code_dialog, null);
 
+        String address = getArguments().getString("address");
+
         ImageView imageView = view.findViewById(R.id.iv_qr_code);
-        Bitmap bitmap = encodeAsBitmap("NBFWDS-VFN3AB-WK775O-CAQS5C-HOPZ5M-WAZRT2-MKPN");
+        Bitmap bitmap = encodeAsBitmap("tbc:"+address);
         imageView.setImageBitmap(bitmap);
 
         builder.setView(view)

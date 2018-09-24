@@ -1,12 +1,8 @@
 package com.example.kringle.kringle.model;
 
-import android.os.Parcel;
-import android.support.annotation.Nullable;
 
 import com.google.gson.annotations.SerializedName;
-import com.thoughtbot.expandablerecyclerview.models.ExpandableGroup;
 
-import java.util.List;
 
 public class TransactionsResponseData {
 
