@@ -64,10 +64,8 @@ public class TransactionsAddDialog extends AppCompatDialogFragment {
         readonly_currency = view.findViewById(R.id.readonly_currency);
         qr_btn = view.findViewById(R.id.qr_code_btn);
 
-        Log.d("LOGGER", "onCreateDialog: " + response);
         if (response != null) {
             response = response.substring(4, response.length());
-            Log.d("LOGGER", "onCreateDialog: " + response);
         }
 
         et_transaction_address.setText(response);

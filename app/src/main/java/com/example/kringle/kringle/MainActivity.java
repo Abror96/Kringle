@@ -265,9 +265,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         // close drawer when item is tapped
                         main_layout.closeDrawers();
 
-                        // Add code here to update the UI based on the item selected
-                        // For example, swap UI fragments here
-
                         return true;
                     }
                 });
@@ -288,28 +285,31 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (data.getStringExtra("response") != null) {
-            String response = data.getStringExtra("response");
+        if (data != null) {
+            if (data.getStringExtra("response") != null) {
+                String response = data.getStringExtra("response");
 
-            if (requestCode == LoadQrCode.REQUEST_CODE_FOR_ACCOUNT_INTENT) {
-                try {
-                    parseResponseJson("{"+response+"}");
-                    showLoadingData();
-                } catch (Exception e) {
-                    Snackbar.make(main_layout, "Authorization error, please scan the actual QR-Code",
-                            Snackbar.LENGTH_LONG).show();
+                if (requestCode == LoadQrCode.REQUEST_CODE_FOR_ACCOUNT_INTENT) {
+                    try {
+                        parseResponseJson("{"+response+"}");
+                        showLoadingData();
+                    } catch (Exception e) {
+                        Snackbar.make(main_layout, "Authorization error, please scan the actual QR-Code",
+                                Snackbar.LENGTH_LONG).show();
+                    }
+                } else if (requestCode == LoadQrCode.REQUEST_CODE_FOR_ADDRESS_INTENT) {
+                    Bundle bundle = new Bundle();
+                    bundle.putDouble("usd_cur", usd_cur);
+                    bundle.putDouble("eur_cur", eur_cur);
+                    bundle.putString("response", response);
+
+                    TransactionsAddDialog transactionsAddDialog = new TransactionsAddDialog();
+                    transactionsAddDialog.setArguments(bundle);
+                    transactionsAddDialog.show(getSupportFragmentManager(), "Transaction adding dialog");
                 }
-            } else if (requestCode == LoadQrCode.REQUEST_CODE_FOR_ADDRESS_INTENT) {
-                Bundle bundle = new Bundle();
-                bundle.putDouble("usd_cur", usd_cur);
-                bundle.putDouble("eur_cur", eur_cur);
-                bundle.putString("response", response);
-
-                TransactionsAddDialog transactionsAddDialog = new TransactionsAddDialog();
-                transactionsAddDialog.setArguments(bundle);
-                transactionsAddDialog.show(getSupportFragmentManager(), "Transaction adding dialog");
             }
         }
+
     }
 
     private void isAuthorized() {
